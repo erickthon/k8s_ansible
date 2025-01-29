@@ -1,0 +1,12 @@
+- name: Copy join command to worker nodes
+  ansible.builtin.copy:
+    src: ./kubeadm_join_command.sh
+    dest: /tmp/kubeadm_join_command.sh
+    mode: '0755'
+
+- name: Join worker node to cluster
+  ansible.builtin.shell: |
+    bash /tmp/kubeadm_join_command.sh
+  args:
+    executable: /bin/bash
+  creates: /etc/kubernetes/kubelet.conf

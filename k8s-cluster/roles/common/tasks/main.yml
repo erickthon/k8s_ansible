@@ -1,0 +1,38 @@
+- name: Update system packages
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: dist
+
+- name: Disable swap immediately
+  ansible.builtin.command:
+    cmd: swapoff -a
+    creates: /proc/swaps
+
+- name: Disable the dphys-swapfile service
+  ansible.builtin.systemd:
+    name: dphys-swapfile
+    state: stopped
+    enabled: false
+
+- name: Remove the swap file
+  ansible.builtin.file:
+    path: /var/swap
+    state: absent
+  failed_when: false
+
+- name: Verify swap is disabled
+  ansible.builtin.command:
+    cmd: swapon --show
+  register: swap_status
+  changed_when: swap_status.stdout != ""
+
+- name: Enable cgroup support
+  ansible.builtin.lineinfile:
+    path: /boot/firmware/cmdline.txt
+    line: "cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory"
+    state: present
+
+- name: Reboot to apply changes
+  ansible.builtin.reboot:
+    msg: "Rebooting to apply cgroup changes"
+    reboot_timeout: 300

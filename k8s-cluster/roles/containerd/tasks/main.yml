@@ -1,0 +1,22 @@
+- name: Install dependencies
+  ansible.builtin.apt:
+    name:
+      - containerd
+      - apt-transport-https
+      - ca-certificates
+      - curl
+    state: present
+
+- name: Configure containerd
+  ansible.builtin.shell: |
+    containerd config default > /etc/containerd/config.toml
+    sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
+  args:
+    executable: /bin/bash
+  creates: /etc/containerd/config.toml
+
+- name: Restart containerd
+  ansible.builtin.systemd:
+    name: containerd
+    state: restarted
+    enabled: true
